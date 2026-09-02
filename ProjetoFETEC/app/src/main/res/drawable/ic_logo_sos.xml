@@ -1,0 +1,39 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Red Map Pin (The 'O') -->
+    <path
+        android:pathData="M60,15c-19.3,0 -35,15.7 -35,35c0,26.2 35,55 35,55s35,-28.8 35,-55c0,-19.3 -15.7,-35 -35,-35z"
+        android:fillColor="#FF0000"/>
+
+    <!-- Dark Concentric Circle (Camera Lens) -->
+    <path
+        android:pathData="M60,50m-15,0a15,15 0,1 1,30 0a15,15 0,1 1,-30 0"
+        android:fillColor="#1A1A1A"/>
+    <path
+        android:pathData="M60,50m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0"
+        android:fillColor="#0A0A0A"/>
+    <path
+        android:pathData="M64,46m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"
+        android:fillColor="#40FFFFFF"/>
+
+    <!-- Left 'S' (White) -->
+    <path
+        android:pathData="M15,45h8c2.2,0 4,1.8 4,4v4c0,2.2 -1.8,4 -4,4h-4c-2.2,0 -4,1.8 -4,4v4c0,2.2 1.8,4 4,4h8"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+    <!-- Right 'S' (White) -->
+    <path
+        android:pathData="M93,45h8c2.2,0 4,1.8 4,4v4c0,2.2 -1.8,4 -4,4h-4c-2.2,0 -4,1.8 -4,4v4c0,2.2 1.8,4 4,4h8"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+</vector>

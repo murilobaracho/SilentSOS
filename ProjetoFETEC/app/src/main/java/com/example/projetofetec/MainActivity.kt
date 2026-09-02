@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -47,9 +48,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import com.example.projetofetec.data.HistoryItem
 import com.example.projetofetec.data.HistoryManager
 import com.example.projetofetec.services.EmergencyAccessibilityService
@@ -61,113 +68,125 @@ import java.util.*
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             var isDarkTheme by remember { mutableStateOf(true) }
             var currentTab by remember { mutableStateOf(0) }
+            
+            val context = LocalContext.current
+            val prefs = remember { context.getSharedPreferences("emergency_prefs", Context.MODE_PRIVATE) }
+            var onboardingComplete by remember { mutableStateOf(prefs.getBoolean("onboarding_complete", false)) }
 
             SilentSOSTheme(darkTheme = isDarkTheme) {
-                Scaffold(
-                    topBar = {
-                        CenterAlignedTopAppBar(
-                            title = { 
-                                Text(
-                                    "SILENT SOS", 
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 2.sp,
-                                    color = MaterialTheme.colorScheme.onBackground
-                                ) 
-                            },
-                            actions = {
-                                IconButton(
-                                    onClick = { isDarkTheme = !isDarkTheme },
-                                    modifier = Modifier.padding(end = 8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
-                                        contentDescription = "Tema",
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            },
-                            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.background
+                if (!onboardingComplete) {
+                    OnboardingScreen(onFinished = {
+                        prefs.edit().putBoolean("onboarding_complete", true).apply()
+                        onboardingComplete = true
+                    })
+                } else {
+                    Scaffold(
+                        topBar = {
+                            CenterAlignedTopAppBar(
+                                title = { 
+                                    Text(
+                                        "SILENT SOS", 
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 2.sp,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    ) 
+                                },
+                                actions = {
+                                    IconButton(
+                                        onClick = { isDarkTheme = !isDarkTheme },
+                                        modifier = Modifier.padding(end = 8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                            contentDescription = "Tema",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                },
+                                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.background
+                                )
                             )
-                        )
-                    },
-                    bottomBar = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 24.dp, start = 24.dp, end = 24.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Surface(
+                        },
+                        bottomBar = {
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(64.dp)
-                                    .shadow(16.dp, RoundedCornerShape(32.dp)),
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                                shape = RoundedCornerShape(32.dp),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                                tonalElevation = 8.dp
+                                    .padding(bottom = 24.dp, start = 24.dp, end = 24.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxSize(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(64.dp)
+                                        .shadow(16.dp, RoundedCornerShape(32.dp)),
+                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                                    shape = RoundedCornerShape(32.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                    tonalElevation = 8.dp
                                 ) {
-                                    val items = listOf("Escudo", "Registros")
-                                    items.forEachIndexed { index, label ->
-                                        val isSelected = currentTab == index
-                                        val icon = if (index == 0) Icons.Default.Shield else Icons.Default.History
-                                        
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .fillMaxHeight()
-                                                .clip(RoundedCornerShape(32.dp))
-                                                .clickable { currentTab = index },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Column(
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                                verticalArrangement = Arrangement.Center
+                                    Row(
+                                        modifier = Modifier.fillMaxSize(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                    ) {
+                                        val items = listOf("Escudo", "Registros")
+                                        items.forEachIndexed { index, label ->
+                                            val isSelected = currentTab == index
+                                            val icon = if (index == 0) Icons.Default.Shield else Icons.Default.History
+                                            
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .fillMaxHeight()
+                                                    .clip(RoundedCornerShape(32.dp))
+                                                    .clickable { currentTab = index },
+                                                contentAlignment = Alignment.Center
                                             ) {
-                                                Icon(
-                                                    imageVector = icon,
-                                                    contentDescription = null,
-                                                    tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    modifier = Modifier.size(24.dp)
-                                                )
-                                                Text(
-                                                    text = label,
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                                )
+                                                Column(
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    verticalArrangement = Arrangement.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = icon,
+                                                        contentDescription = null,
+                                                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.size(24.dp)
+                                                    )
+                                                    Text(
+                                                        text = label,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                ) { innerPadding ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                            .background(MaterialTheme.colorScheme.background)
-                    ) {
-                        if (currentTab == 0) {
-                            EmergencyControlPanel(
-                                onOpenAccessibility = { openAccessibilitySettings() }
-                            )
-                        } else {
-                            HistoryScreen()
+                    ) { innerPadding ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                                .background(MaterialTheme.colorScheme.background)
+                        ) {
+                            if (currentTab == 0) {
+                                EmergencyControlPanel(
+                                    onOpenAccessibility = { openAccessibilitySettings() }
+                                )
+                            } else {
+                                HistoryScreen()
+                            }
                         }
                     }
                 }
@@ -177,9 +196,12 @@ class MainActivity : ComponentActivity() {
 
     private fun openAccessibilitySettings() {
         val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
     }
 }
+
+// --- COMPONENTES DE TELA PRINCIPAL ---
 
 @Composable
 fun EmergencyControlPanel(
@@ -788,6 +810,318 @@ private fun exportHistory(context: Context, history: List<HistoryItem>) {
         putExtra(Intent.EXTRA_TEXT, report.toString())
     }
     context.startActivity(Intent.createChooser(intent, "Compartilhar Histórico"))
+}
+
+// --- COMPONENTES DE ONBOARDING ---
+
+@Composable
+fun OnboardingScreen(onFinished: () -> Unit) {
+    var currentStep by remember { mutableIntStateOf(0) }
+    val steps = 5
+    
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("emergency_prefs", Context.MODE_PRIVATE) }
+    
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ -> }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Barra de progresso topo
+        LinearProgressIndicator(
+            progress = { (currentStep + 1).toFloat() / steps },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+                .clip(CircleShape),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.outlineVariant
+        )
+
+        Box(modifier = Modifier.weight(1f)) {
+            AnimatedContent(
+                targetState = currentStep,
+                transitionSpec = {
+                    if (targetState > initialState) {
+                        (slideInHorizontally { it } + fadeIn()).togetherWith(slideOutHorizontally { -it } + fadeOut())
+                    } else {
+                        (slideInHorizontally { -it } + fadeIn()).togetherWith(slideOutHorizontally { it } + fadeOut())
+                    }.using(SizeTransform(clip = false))
+                }, label = "step_transition"
+            ) { step ->
+                when (step) {
+                    0 -> OnboardingStepIntro()
+                    1 -> OnboardingStepTrigger()
+                    2 -> OnboardingStepPermissions(permissionLauncher)
+                    3 -> OnboardingStepSetup(prefs)
+                    4 -> OnboardingStepFinal(onOpenAccessibility = {
+                        context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                    })
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (currentStep > 0) {
+                TextButton(onClick = { currentStep-- }) {
+                    Text("Voltar", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            } else {
+                Spacer(Modifier.width(80.dp))
+            }
+
+            Button(
+                onClick = {
+                    if (currentStep < steps - 1) {
+                        currentStep++
+                    } else {
+                        onFinished()
+                    }
+                },
+                modifier = Modifier
+                    .height(56.dp)
+                    .width(160.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(if (currentStep == steps - 1) "Começar!" else "Continuar", fontWeight = FontWeight.Bold)
+                if (currentStep < steps - 1) {
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, null, modifier = Modifier.size(18.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun OnboardingStepIntro() {
+    OnboardingTemplate(
+        painter = painterResource(id = R.drawable.ic_logo_sos),
+        title = "Bem-vindo ao Silent SOS",
+        description = "Este aplicativo foi criado para proteger você de forma silenciosa e discreta em momentos de perigo.",
+        iconSize = 120.dp,
+        tint = Color.Unspecified
+    )
+}
+
+@Composable
+fun OnboardingStepTrigger() {
+    OnboardingTemplate(
+        icon = Icons.Default.TouchApp,
+        title = "Como pedir ajuda?",
+        description = "Basta apertar o botão de VOLUME PARA CIMA 5 vezes seguidas. O celular vai vibrar e enviar sua localização e um áudio para seus contatos."
+    )
+}
+
+@Composable
+fun OnboardingStepPermissions(launcher: androidx.activity.result.ActivityResultLauncher<Array<String>>) {
+    OnboardingTemplate(
+        icon = Icons.Default.Lock,
+        title = "Precisamos de Acesso",
+        description = "Para funcionar, o app precisa de Localização, SMS e Microfone. Clique no botão abaixo para autorizar cada um."
+    ) {
+        Button(
+            onClick = {
+                val permissions = mutableListOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.SEND_SMS,
+                    Manifest.permission.RECORD_AUDIO
+                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                launcher.launch(permissions.toTypedArray())
+            },
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+        ) {
+            Icon(Icons.Default.Security, null)
+            Spacer(Modifier.width(8.dp))
+            Text("Autorizar Agora")
+        }
+    }
+}
+
+@Composable
+fun OnboardingStepSetup(prefs: android.content.SharedPreferences) {
+    var name by remember { mutableStateOf(prefs.getString("user_name", "") ?: "") }
+    var phone by remember { mutableStateOf("") }
+    var contacts by remember { 
+        mutableStateOf(prefs.getStringSet("emergency_contacts", emptySet())?.toList() ?: emptyList()) 
+    }
+
+    OnboardingTemplate(
+        icon = Icons.Default.Person,
+        title = "Quem é você?",
+        description = "Diga seu nome e o número de alguém que confia."
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { 
+                    name = it
+                    prefs.edit().putString("user_name", it).apply()
+                },
+                label = { Text("Seu Nome") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                ),
+                singleLine = true
+            )
+            
+            Spacer(Modifier.height(16.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = { Text("Telefone do Contato") },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    singleLine = true
+                )
+                Spacer(Modifier.width(8.dp))
+                IconButton(
+                    onClick = {
+                        if (phone.isNotBlank()) {
+                            val newList = contacts + phone
+                            contacts = newList
+                            prefs.edit().putStringSet("emergency_contacts", newList.toSet()).apply()
+                            phone = ""
+                        }
+                    },
+                    modifier = Modifier
+                        .size(52.dp)
+                        .background(MaterialTheme.colorScheme.primary, CircleShape)
+                ) {
+                    Icon(Icons.Default.Add, null, tint = Color.White)
+                }
+            }
+            
+            contacts.forEach { 
+                Text(
+                    text = "✓ $it", 
+                    style = MaterialTheme.typography.bodyMedium, 
+                    modifier = Modifier.padding(top = 8.dp).fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Start
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun OnboardingStepFinal(onOpenAccessibility: () -> Unit) {
+    OnboardingTemplate(
+        icon = Icons.Default.SettingsSuggest,
+        title = "Último Passo!",
+        description = "Para que o app detecte os botões mesmo com a tela desligada, você precisa ativar o 'Silent SOS' no menu de Acessibilidade."
+    ) {
+        Button(
+            onClick = onOpenAccessibility,
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+            Text("Ir para Configurações")
+        }
+    }
+}
+
+@Composable
+fun OnboardingTemplate(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    extraContent: @Composable () -> Unit = {}
+) {
+    OnboardingTemplate(
+        painter = rememberVectorPainter(icon),
+        title = title,
+        description = description,
+        extraContent = extraContent
+    )
+}
+
+@Composable
+fun OnboardingTemplate(
+    painter: Painter,
+    title: String,
+    description: String,
+    iconSize: Dp = 52.dp,
+    tint: Color = MaterialTheme.colorScheme.primary,
+    extraContent: @Composable () -> Unit = {}
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(top = 20.dp, bottom = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(if (iconSize > 80.dp) iconSize + 20.dp else 100.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painter,
+                contentDescription = null,
+                modifier = Modifier.size(iconSize),
+                tint = tint
+            )
+        }
+        
+        Spacer(Modifier.height(24.dp))
+        
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        
+        Spacer(Modifier.height(12.dp))
+        
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            lineHeight = 22.sp
+        )
+        
+        Spacer(Modifier.height(24.dp))
+        
+        extraContent()
+    }
 }
 
 private fun checkPermission(context: Context, permission: String): Boolean {
