@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Silent SOS</string>
+    <string name="accessibility_service_label">Silent SOS - Monitoramento de Botões</string>
+</resources>
