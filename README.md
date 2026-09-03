@@ -1,4 +1,4 @@
-# 🚨 FETEC - SilentSOS
+# 🚨 SilentSOS (FETEC)
 
 > **Sistema Inteligente de Alerta Silencioso e Assistência de Emergência**
 
