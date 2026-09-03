@@ -1,7 +1,7 @@
 # 🚨 SilentSOS (FETEC)
 
 > **Sistema Inteligente de Alerta Silencioso e Assistência de Emergência**
-
+   
 [![Status do Projeto](https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow.svg)](#)
 [![Plataforma](https://img.shields.io/badge/Plataforma-Android%20%7C%20Wear%20OS-brightgreen.svg)](#)
 [![Linguagem](https://img.shields.io/badge/Linguagem-Kotlin-purple.svg)](#)
