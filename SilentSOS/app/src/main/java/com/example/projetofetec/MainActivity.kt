@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
+import android.os.PowerManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -223,6 +224,7 @@ fun EmergencyControlPanel(
     var hasSmsPerm by remember { mutableStateOf(checkPermission(context, Manifest.permission.SEND_SMS)) }
     var hasAudioPerm by remember { mutableStateOf(checkPermission(context, Manifest.permission.RECORD_AUDIO)) }
     var isAccessibilityEnabled by remember { mutableStateOf(isAccessibilityServiceEnabled(context, EmergencyAccessibilityService::class.java)) }
+    var isIgnoringBattery by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -235,6 +237,7 @@ fun EmergencyControlPanel(
     LaunchedEffect(Unit) {
         while(true) {
             isAccessibilityEnabled = isAccessibilityServiceEnabled(context, EmergencyAccessibilityService::class.java)
+            isIgnoringBattery = isIgnoringBatteryOptimizations(context)
             delay(2000)
         }
     }
@@ -336,29 +339,43 @@ fun EmergencyControlPanel(
 
         SectionTitle("Privilégios do Sistema", Icons.Default.Lock)
 
-        StepCard(number = "03", title = "Acessos Críticos", isDone = hasLocationPerm && hasSmsPerm && hasAudioPerm) {
+        StepCard(number = "03", title = "Acessos Críticos", isDone = hasLocationPerm && hasSmsPerm && hasAudioPerm && isIgnoringBattery) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 PermissionRow("Localização GPS", hasLocationPerm)
                 PermissionRow("Envio de SMS", hasSmsPerm)
                 PermissionRow("Captura de Áudio", hasAudioPerm)
+                PermissionRow("Otimização de Bateria (OFF)", isIgnoringBattery)
                 
-                Button(
-                    onClick = {
-                        val permissions = mutableListOf(
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION,
-                            Manifest.permission.SEND_SMS,
-                            Manifest.permission.RECORD_AUDIO
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = {
+                            val permissions = mutableListOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                                Manifest.permission.SEND_SMS,
+                                Manifest.permission.RECORD_AUDIO
+                            )
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                            permissionLauncher.launch(permissions.toTypedArray())
+                        },
+                        modifier = Modifier.weight(1f).height(50.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Permissões", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                    
+                    Button(
+                        onClick = { requestIgnoreBatteryOptimizations(context) },
+                        modifier = Modifier.weight(1f).height(50.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isIgnoringBattery) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary
                         )
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
-                        }
-                        permissionLauncher.launch(permissions.toTypedArray())
-                    },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("Configurar Permissões", fontWeight = FontWeight.Bold)
+                    ) {
+                        Text("Bateria", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
                 }
             }
         }
@@ -817,7 +834,7 @@ private fun exportHistory(context: Context, history: List<HistoryItem>) {
 @Composable
 fun OnboardingScreen(onFinished: () -> Unit) {
     var currentStep by remember { mutableIntStateOf(0) }
-    val steps = 5
+    val steps = 6
     
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("emergency_prefs", Context.MODE_PRIVATE) }
@@ -859,8 +876,9 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                     0 -> OnboardingStepIntro()
                     1 -> OnboardingStepTrigger()
                     2 -> OnboardingStepPermissions(permissionLauncher)
-                    3 -> OnboardingStepSetup(prefs)
-                    4 -> OnboardingStepFinal(onOpenAccessibility = {
+                    3 -> OnboardingStepBattery(onEnable = { requestIgnoreBatteryOptimizations(context) })
+                    4 -> OnboardingStepSetup(prefs)
+                    5 -> OnboardingStepFinal(onOpenAccessibility = {
                         context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                     })
                 }
@@ -950,6 +968,25 @@ fun OnboardingStepPermissions(launcher: androidx.activity.result.ActivityResultL
             Icon(Icons.Default.Security, null)
             Spacer(Modifier.width(8.dp))
             Text("Autorizar Agora")
+        }
+    }
+}
+
+@Composable
+fun OnboardingStepBattery(onEnable: () -> Unit) {
+    OnboardingTemplate(
+        icon = Icons.Default.BatteryChargingFull,
+        title = "Energia Infinita",
+        description = "Em celulares Samsung e outros, o sistema pode 'dormir' o app. Desative a otimização de bateria para garantir o funcionamento 24h."
+    ) {
+        Button(
+            onClick = onEnable,
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+        ) {
+            Icon(Icons.Default.FlashOn, null)
+            Spacer(Modifier.width(8.dp))
+            Text("Desativar Otimização")
         }
     }
 }
@@ -1131,6 +1168,19 @@ fun OnboardingTemplate(
 
 private fun checkPermission(context: Context, permission: String): Boolean {
     return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+}
+
+private fun isIgnoringBatteryOptimizations(context: Context): Boolean {
+    val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+    return powerManager.isIgnoringBatteryOptimizations(context.packageName)
+}
+
+private fun requestIgnoreBatteryOptimizations(context: Context) {
+    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+        data = Uri.parse("package:${context.packageName}")
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+    context.startActivity(intent)
 }
 
 private fun isAccessibilityServiceEnabled(context: Context, service: Class<out AccessibilityService>): Boolean {
