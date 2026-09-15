@@ -8,7 +8,7 @@ import { Reveal } from "@/components/Reveal";
 import { SmoothScroll } from "@/components/SmoothScroll";
 
 
-const GITHUB = "https://github.com";
+const GITHUB = "https://github.com/murilobaracho/SilentSOS";
 // GitHub Pages builds ship the APK as a static file next to the site (fetched
 // by the deploy workflow); Lovable builds keep using the hosted asset proxy.
 const apkUrl = (import.meta.env["VITE_APK_URL"] as string | undefined) || apk.url;
