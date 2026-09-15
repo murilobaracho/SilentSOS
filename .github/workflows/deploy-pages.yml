@@ -1,0 +1,56 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+
+      # The APK is too large to live in the repository — download it from the
+      # hosted copy so it ships as a static file next to the site.
+      - name: Download APK
+        run: curl -fL -o public/silent-sos.apk "https://project--68eee342-2573-42da-8741-5a6ff29d85ad.lovable.app/__l5e/assets-v1/722b359f-bd62-40bc-afab-ceec84ce99c4/silent-sos.apk"
+
+      - name: Build static site
+        run: npm run build
+        env:
+          PAGES_BUILD: "1"
+          VITE_APK_URL: silent-sos.apk
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/client
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
