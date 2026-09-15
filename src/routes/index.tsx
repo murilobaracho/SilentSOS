@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { MouseEvent as ReactMouseEvent } from "react";
-import { Download, Github, Menu, Watch, EyeOff, Power, Cog, ScrollText, CircleDot } from "lucide-react";
+import { Download, Github, Watch, EyeOff, Power, Cog, ScrollText, CircleDot } from "lucide-react";
 import mockup from "@/assets/silentsos-mockup.png";
 import apk from "@/assets/silent-sos.apk.asset.json";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Reveal } from "@/components/Reveal";
 import { SmoothScroll } from "@/components/SmoothScroll";
 
 
-const GITHUB = "https://github.com/murilobaracho/FETEC-SilentSOS.git";
+const GITHUB = "https://github.com";
 // GitHub Pages builds ship the APK as a static file next to the site (fetched
 // by the deploy workflow); Lovable builds keep using the hosted asset proxy.
 const apkUrl = (import.meta.env["VITE_APK_URL"] as string | undefined) || apk.url;
@@ -107,11 +107,10 @@ function Landing() {
             <a className="transition-colors hover:text-foreground" href="#tecnologias">Tecnologias</a>
             <a className="transition-colors hover:text-foreground" href="#download">Download</a>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center">
             <a href={apkUrl} download="silent-sos.apk" onClick={downloadApk}>
               <Button variant="pill" size="sm" className="cta-pulse">Baixar APK</Button>
             </a>
-            <Menu className="h-5 w-5 text-muted-foreground md:hidden" />
           </div>
         </nav>
       </header>
@@ -186,60 +185,14 @@ function Landing() {
       <section id="tecnologias" className="mx-auto max-w-6xl px-6 pb-24">
         <Reveal as="h2" className="text-2xl font-semibold tracking-tight">Arquitetura & stack tecnológica</Reveal>
         <Reveal as="p" delay={100} className="mt-2 text-sm text-muted-foreground">Construído 100% nativo para Android.</Reveal>
-        <div className="mt-8 flex flex-wrap gap-3">
-          {stack.map((t, i) => (
-            <Reveal
-              key={t}
-              as="span"
-              delay={150 + i * 100}
-              className="inline-block rounded-2xl border border-[var(--glass-border)] bg-[var(--glass)] px-5 py-3 text-sm text-foreground/90 backdrop-blur-xl transition-colors hover:border-primary/30"
-            >
-              {t}
-            </Reveal>
+        <div className="mt-6 flex flex-wrap gap-2">
+          {stack.map((item) => (
+            <span key={item} className="rounded-full border border-[var(--glass-border)] bg-[var(--glass)] px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-xl">
+              {item}
+            </span>
           ))}
         </div>
       </section>
-
-      {/* Download */}
-      <section id="download" className="px-6 pb-28">
-        <Reveal className="relative mx-auto max-w-3xl overflow-hidden rounded-[36px] border border-[var(--glass-border)] bg-[var(--glass)] px-5 py-10 text-center backdrop-blur-2xl sm:px-8 sm:py-16">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-1/2 top-full h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-40 blur-[100px]"
-            style={{ background: "var(--gradient-accent)" }}
-          />
-          <h2 className="relative text-4xl font-semibold tracking-tight sm:text-5xl">Segurança ao seu alcance.</h2>
-          <p className="relative mt-4 text-muted-foreground">Compatível com Android 8.0 ou superior.</p>
-          <div className="relative mt-9">
-            <a href={apkUrl} download="silent-sos.apk" onClick={downloadApk} className="block sm:inline-block">
-              <Button variant="hero" size="xl" className="cta-pulse h-auto w-full whitespace-normal px-6 py-4 text-sm leading-snug sm:w-auto sm:text-base">
-                <Download className="h-4 w-4 shrink-0" /> Baixar APK Gratuito (v1.0.0)
-              </Button>
-            </a>
-          </div>
-          <p className="relative mx-auto mt-6 max-w-md text-xs leading-relaxed text-muted-foreground">
-            Após a instalação, ative as permissões de acessibilidade em Ajustes → Acessibilidade → SilentSOS para
-            habilitar o acionamento discreto.
-          </p>
-        </Reveal>
-      </section>
-
-
-      {/* Footer */}
-      <footer className="border-t border-[var(--glass-border)] px-6 py-10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-xs text-muted-foreground sm:flex-row">
-          <p>Desenvolvido para a FETEC.</p>
-          <a
-            href={GITHUB}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 transition-colors hover:text-foreground"
-          >
-            <Github className="h-4 w-4" /> Repositório no GitHub
-          </a>
-          <p>© 2026 SilentSOS · Licença MIT</p>
-        </div>
-      </footer>
     </div>
   );
 }
