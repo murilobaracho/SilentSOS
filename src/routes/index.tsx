@@ -8,7 +8,7 @@ import { Reveal } from "@/components/Reveal";
 import { SmoothScroll } from "@/components/SmoothScroll";
 
 
-const GITHUB = "https://github.com/murilobaracho/SilentSOS";
+const GITHUB = "https://github.com/murilobaracho/SilentSOS/";
 // GitHub Pages builds ship the APK as a static file next to the site (fetched
 // by the deploy workflow); Lovable builds keep using the hosted asset proxy.
 const apkUrl = (import.meta.env["VITE_APK_URL"] as string | undefined) || apk.url;
@@ -72,17 +72,17 @@ const features = [
   {
     icon: Power,
     title: "Tela de Falso Desligamento",
-    text: "Simula o desligamento enquanto mantém a proteção ativa.",
+    text: "Simula o desligamento enquanto mantém a proteção activa.",
   },
   {
     icon: Cog,
     title: "Foreground Service",
-    text: "Monitoramento contínuo, estável e ininterrupto em segundo plano.",
+    text: "Monitorização contínua, estável e ininterrupto em segundo plano.",
   },
   {
     icon: ScrollText,
     title: "Histórico Local",
-    text: "Registros salvos apenas no dispositivo com privacidade total.",
+    text: "Registos salvos apenas no dispositivo com privacidade total.",
   },
 ];
 
@@ -193,6 +193,18 @@ function Landing() {
           ))}
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="border-t border-[var(--glass-border)] bg-background py-8 text-center text-xs text-muted-foreground">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
+          <p>© {new Date().getFullYear()} SilentSOS. Desenvolvido para a FETEC.</p>
+          <div className="flex gap-6">
+            <a href="#top" className="transition-colors hover:text-foreground">Início</a>
+            <a href="#recursos" className="transition-colors hover:text-foreground">Recursos</a>
+            <a href={GITHUB} target="_blank" rel="noreferrer" className="transition-colors hover:text-foreground">GitHub</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
